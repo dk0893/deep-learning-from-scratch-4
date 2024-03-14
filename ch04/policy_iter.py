@@ -1,6 +1,11 @@
 if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+import argparse
+import matplotlib.pyplot as plt
+from matplotlib.animation import ArtistAnimation
+
 from collections import defaultdict
 from common.gridworld import GridWorld
 from ch04.policy_eval import policy_eval
@@ -35,25 +40,40 @@ def greedy_policy(V, env, gamma):
     return pi
 
 
-def policy_iter(env, gamma, threshold=0.001, is_render=True):
+def policy_iter(env, gamma, threshold=0.001, is_render=True, animation=False, fpath=None):
     pi = defaultdict(lambda: {0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25})
     V = defaultdict(lambda: 0)
 
+    artists = []
     while True:
         V = policy_eval(pi, V, env, gamma, threshold)
         new_pi = greedy_policy(V, env, gamma)
 
         if is_render:
-            env.render_v(V, pi)
+            artists.append( env.render_v(V, pi) )
 
         if new_pi == pi:
             break
         pi = new_pi
 
+    if animation:
+        anim = ArtistAnimation( env.renderer.fig, artists, interval=2000 )
+        anim.save( fpath )
+
     return pi
 
 
+def parse_args():
+    parser = argparse.ArgumentParser( description='policy_iter.py' )
+    
+    parser.add_argument( '--animation', action='store_true', default=False,             help='enable animation'          )
+    parser.add_argument( '--fpath',                          default='policy_iter.gif', help='input save animation path' )
+    
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    env = GridWorld()
+    args = parse_args()
+    
+    env = GridWorld( animation=args.animation )
     gamma = 0.9
-    pi = policy_iter(env, gamma)
+    pi = policy_iter(env, gamma, animation=args.animation, fpath=args.fpath)

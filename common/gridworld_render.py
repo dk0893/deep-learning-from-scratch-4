@@ -4,22 +4,29 @@ import matplotlib.pyplot as plt
 
 
 class Renderer:
-    def __init__(self, reward_map, goal_state, wall_state):
+    def __init__(self, reward_map, goal_state, wall_state, animation=False, figsize=None):
         self.reward_map = reward_map
         self.goal_state = goal_state
         self.wall_state = wall_state
         self.ys = len(self.reward_map)
         self.xs = len(self.reward_map[0])
 
-        self.ax = None
-        self.fig = None
         self.first_flg = True
+        self.animation = animation
+        self.figsize = figsize
+        self.cnt = 0
 
-    def set_figure(self, figsize=None):
-        fig = plt.figure(figsize=figsize)
-        self.ax = fig.add_subplot(111)
+        if self.animation:
+            self.fig = plt.figure(figsize=self.figsize)
+            self.ax = self.fig.add_subplot(111)
+
+    def set_figure(self):
+        if not self.animation:
+            self.fig = plt.figure(figsize=self.figsize)
+            self.ax = self.fig.add_subplot(111)
         ax = self.ax
-        ax.clear()
+        if not self.animation:
+            ax.clear()
         ax.tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
         ax.set_xticks(range(self.xs))
         ax.set_yticks(range(self.ys))
@@ -32,6 +39,10 @@ class Renderer:
 
         ys, xs = self.ys, self.xs
         ax = self.ax
+
+        artists = []
+        if self.animation:
+            artists.append( ax.text(0, ys + 0.1, f"cnt={self.cnt}") )
 
         if v is not None:
             color_list = ['red', 'white', 'green']
@@ -50,7 +61,7 @@ class Renderer:
             vmax = 1 if vmax < 1 else vmax
             vmin = -1 if vmin > -1 else vmin
 
-            ax.pcolormesh(np.flipud(v), cmap=cmap, vmin=vmin, vmax=vmax)
+            artists.append( ax.pcolormesh(np.flipud(v), cmap=cmap, vmin=vmin, vmax=vmax) )
 
         for y in range(ys):
             for x in range(xs):
@@ -60,7 +71,7 @@ class Renderer:
                     txt = 'R ' + str(r)
                     if state == self.goal_state:
                         txt = txt + ' (GOAL)'
-                    ax.text(x+.1, ys-y-0.9, txt)
+                    artists.append( ax.text(x+.1, ys-y-0.9, txt) )
 
                 if (v is not None) and state != self.wall_state:
                     if print_value:
@@ -68,7 +79,7 @@ class Renderer:
                         key = 0
                         if v.shape[0] > 7: key = 1
                         offset = offsets[key]
-                        ax.text(x+offset[0], ys-y+offset[1], "{:12.2f}".format(v[y, x]))
+                        artists.append( ax.text(x+offset[0], ys-y+offset[1], "{:12.2f}".format(v[y, x])) )
 
                 if policy is not None and state != self.wall_state:
                     actions = policy[state]
@@ -81,11 +92,13 @@ class Renderer:
                         offset = offsets[action]
                         if state == self.goal_state:
                             continue
-                        ax.text(x+0.45+offset[0], ys-y-0.5+offset[1], arrow)
+                        artists.append( ax.text(x+0.45+offset[0], ys-y-0.5+offset[1], arrow) )
 
                 if state == self.wall_state:
-                    ax.add_patch(plt.Rectangle((x,ys-y-1), 1, 1, fc=(0.4, 0.4, 0.4, 1.)))
+                    artists.append( ax.add_patch(plt.Rectangle((x,ys-y-1), 1, 1, fc=(0.4, 0.4, 0.4, 1.))) )
         plt.show()
+        self.cnt += 1
+        return artists
 
     def render_q(self, q, show_greedy_policy=True):
         self.set_figure()

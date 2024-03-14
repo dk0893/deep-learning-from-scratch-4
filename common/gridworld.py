@@ -3,7 +3,7 @@ import common.gridworld_render as render_helper
 
 
 class GridWorld:
-    def __init__(self):
+    def __init__(self, animation=False):
         self.action_space = [0, 1, 2, 3]
         self.action_meaning = {
             0: "UP",
@@ -21,6 +21,9 @@ class GridWorld:
         self.wall_state = (1, 1)
         self.start_state = (2, 0)
         self.agent_state = self.start_state
+
+        self.renderer = render_helper.Renderer(
+            self.reward_map, self.goal_state, self.wall_state, animation)
 
     @property
     def height(self):
@@ -72,11 +75,7 @@ class GridWorld:
         return next_state, reward, done
 
     def render_v(self, v=None, policy=None, print_value=True):
-        renderer = render_helper.Renderer(self.reward_map, self.goal_state,
-                                          self.wall_state)
-        renderer.render_v(v, policy, print_value)
+        return self.renderer.render_v(v, policy, print_value)
 
     def render_q(self, q=None, print_value=True):
-        renderer = render_helper.Renderer(self.reward_map, self.goal_state,
-                                          self.wall_state)
-        renderer.render_q(q, print_value)
+        self.renderer.render_q(q, print_value)
