@@ -3,12 +3,14 @@ if '__file__' in globals():
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from collections import defaultdict
 from common.gridworld import GridWorld
+from common.image_store import ImageStore
 
 
 def eval_onestep(pi, V, env, gamma=0.9):
     for state in env.states():
         if state == env.goal_state:
             V[state] = 0
+            ImageStore.st_state( env, V, pi, state )
             continue
 
         action_probs = pi[state]
@@ -18,6 +20,7 @@ def eval_onestep(pi, V, env, gamma=0.9):
             r = env.reward(state, action, next_state)
             new_V += action_prob * (r + gamma * V[next_state])
         V[state] = new_V
+        ImageStore.st_state( env, V, pi, state )
     return V
 
 

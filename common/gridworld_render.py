@@ -1,31 +1,28 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from common.image_store import ImageStore
 
 
 class Renderer:
-    def __init__(self, reward_map, goal_state, wall_state, animation=False, figsize=None):
+    def __init__(self, reward_map, goal_state, wall_state, figsize=None):
         self.reward_map = reward_map
         self.goal_state = goal_state
         self.wall_state = wall_state
         self.ys = len(self.reward_map)
         self.xs = len(self.reward_map[0])
-
-        self.first_flg = True
-        self.animation = animation
         self.figsize = figsize
-        self.cnt = 0
 
-        if self.animation:
+        if ImageStore.animation:
             self.fig = plt.figure(figsize=self.figsize)
             self.ax = self.fig.add_subplot(111)
 
     def set_figure(self):
-        if not self.animation:
+        if not ImageStore.animation:
             self.fig = plt.figure(figsize=self.figsize)
             self.ax = self.fig.add_subplot(111)
         ax = self.ax
-        if not self.animation:
+        if not ImageStore.animation:
             ax.clear()
         ax.tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
         ax.set_xticks(range(self.xs))
@@ -34,15 +31,15 @@ class Renderer:
         ax.set_ylim(0, self.ys)
         ax.grid(True)
 
-    def render_v(self, v=None, policy=None, print_value=True):
+    def render_v(self, v=None, policy=None, print_value=True, title=None):
         self.set_figure()
 
         ys, xs = self.ys, self.xs
         ax = self.ax
 
         artists = []
-        if self.animation:
-            artists.append( ax.text(0, ys + 0.1, f"cnt={self.cnt}") )
+        if title is not None:
+            artists.append( ax.text(0, ys + 0.1, title) )
 
         if v is not None:
             color_list = ['red', 'white', 'green']
@@ -96,8 +93,8 @@ class Renderer:
 
                 if state == self.wall_state:
                     artists.append( ax.add_patch(plt.Rectangle((x,ys-y-1), 1, 1, fc=(0.4, 0.4, 0.4, 1.))) )
-        plt.show()
-        self.cnt += 1
+        if ImageStore.ope is None:
+            plt.show()
         return artists
 
     def render_q(self, q, show_greedy_policy=True):
